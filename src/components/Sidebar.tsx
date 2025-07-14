@@ -1,59 +1,33 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { Play, GitBranch, Zap, Brain, Square } from "lucide-react"
+import type React from "react";
+import { LucideMessageCircle, MessageCircle, MessageCircleIcon, MessageSquare } from "lucide-react";
 
 const nodeTemplates = [
   {
-    type: "trigger",
-    label: "Trigger",
-    icon: Play,
-    color: "bg-green-100 border-green-300 text-green-700",
-    description: "Start automation",
+    type: "message",
+    label: "Message",
+    icon: MessageCircleIcon,
+    color: "bg-white border-blue-300 text-blue-700",
+    description: "Start message",
   },
-  {
-    type: "condition",
-    label: "Condition",
-    icon: GitBranch,
-    color: "bg-yellow-100 border-yellow-300 text-yellow-700",
-    description: "Branch logic",
-  },
-  {
-    type: "action",
-    label: "Action",
-    icon: Zap,
-    color: "bg-blue-100 border-blue-300 text-blue-700",
-    description: "Perform task",
-  },
-  {
-    type: "ai",
-    label: "AI Block",
-    icon: Brain,
-    color: "bg-purple-100 border-purple-300 text-purple-700",
-    description: "AI processing",
-  },
-  {
-    type: "end",
-    label: "End",
-    icon: Square,
-    color: "bg-gray-100 border-gray-300 text-gray-700",
-    description: "Terminate flow",
-  },
-]
+];
 
 export function Sidebar() {
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
-    event.dataTransfer.setData("application/reactflow", nodeType)
-    event.dataTransfer.effectAllowed = "move"
-  }
+    event.dataTransfer.setData("application/reactflow", nodeType);
+    event.dataTransfer.effectAllowed = "move";
+  };
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 p-4">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Node Templates</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        Node Templates
+      </h2>
 
       <div className="space-y-3">
         {nodeTemplates.map((template) => {
-          const Icon = template.icon
+          const Icon = template.icon;
           return (
             <div
               key={template.type}
@@ -65,11 +39,13 @@ export function Sidebar() {
                 <Icon className="w-5 h-5" />
                 <div>
                   <div className="font-medium">{template.label}</div>
-                  <div className="text-xs opacity-75">{template.description}</div>
+                  <div className="text-xs opacity-75">
+                    {template.description}
+                  </div>
                 </div>
               </div>
             </div>
-          )
+          );
         })}
       </div>
 
@@ -83,5 +59,5 @@ export function Sidebar() {
         </ul>
       </div>
     </div>
-  )
+  );
 }

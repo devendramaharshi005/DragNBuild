@@ -1,17 +1,24 @@
-"use client"
-import { Download, Play, Save, Upload, Plus, Undo, Redo, Trash2 } from "lucide-react"
+"use client";
+import {
+  Download,
+  Save,
+  Upload,
+  Plus,
+  Undo,
+  Redo,
+  Trash2,
+} from "lucide-react";
 
 interface ToolbarProps {
-  onExport: () => void
-  onLoad: () => void
-  onSave: () => void
-  onReset: () => void
-  onSimulate: () => void
-  onUndo: () => void
-  onRedo: () => void
-  onDelete?: () => void
-  canUndo: boolean
-  canRedo: boolean
+  onExport: () => void;
+  onLoad: () => void;
+  onSave: () => void;
+  onReset: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  onDelete?: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export function Toolbar({
@@ -19,7 +26,6 @@ export function Toolbar({
   onLoad,
   onSave,
   onReset,
-  onSimulate,
   onUndo,
   onRedo,
   onDelete,
@@ -90,14 +96,6 @@ export function Toolbar({
 
         <div className="flex items-center space-x-2">
           <button
-            onClick={onSimulate}
-            className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-300 rounded-md hover:bg-blue-100"
-          >
-            <Play className="w-4 h-4" />
-            <span>Test agent</span>
-          </button>
-
-          <button
             onClick={onExport}
             className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800"
           >
@@ -107,5 +105,5 @@ export function Toolbar({
         </div>
       </div>
     </div>
-  )
+  );
 }

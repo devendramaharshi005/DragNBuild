@@ -13,26 +13,44 @@ import ReactFlow, {
   Background,
   MiniMap,
   type ReactFlowInstance,
-  type KeyCode,
+  ConnectionLineType,
+  ReactFlowState,
 } from "reactflow";
 import { Sidebar } from "./Sidebar";
 import { Toolbar } from "./Toolbar";
 import { ConfigPanel } from "./ConfigPanel";
 import { nodeTypes } from "./nodes";
 import { useAutomationStore } from "../store/automationStore";
+import toast from "react-hot-toast";
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 
+const getFlowStateFromLocalStorage = (): ReactFlowState | null => {
+  const raw = localStorage.getItem("automation-flow");
+  try {
+    console.log(raw);
+    return raw ? (JSON.parse(raw) as ReactFlowState) : null;
+  } catch {
+    return null;
+  }
+};
+
 export function AutomationBuilder() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(
+    getFlowStateFromLocalStorage()?.nodes || initialNodes
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState(
+    getFlowStateFromLocalStorage()?.edges || initialEdges
+  );
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const {
     selectedNode,
+    selectedEdge,
+    setSelectedEdge,
     setSelectedNode,
     simulationLog,
     clearSimulationLog,
@@ -128,12 +146,22 @@ export function AutomationBuilder() {
   const onNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
       setSelectedNode(node);
+      setSelectedEdge(null);
     },
     [setSelectedNode]
   );
 
+  const onEdgeClick = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      setSelectedEdge(edge);
+      setSelectedNode(null);
+    },
+    [setSelectedEdge]
+  );
+
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
+    setSelectedEdge(null);
   }, [setSelectedNode]);
 
   const deleteSelectedNode = useCallback(() => {
@@ -148,6 +176,13 @@ export function AutomationBuilder() {
     );
     setSelectedNode(null);
   }, [selectedNode, setNodes, setEdges, setSelectedNode]);
+
+  const deleteSelectedEdge = useCallback(() => {
+    if (!selectedEdge) return;
+
+    setEdges((eds) => eds.filter((edge) => edge.id !== selectedEdge.id));
+    setSelectedEdge(null);
+  }, [selectedEdge, setEdges, setSelectedEdge]);
 
   const exportFlow = useCallback(() => {
     const flow = {
@@ -214,7 +249,8 @@ export function AutomationBuilder() {
 
     // Show temporary save confirmation
     const originalTitle = document.title;
-    document.title = "✓ Saved - Automation Builder";
+    document.title = "✓ Saved - Message Flow";
+    toast.success('Message Flow is Saved!')
     setTimeout(() => {
       document.title = originalTitle;
     }, 2000);
@@ -225,6 +261,10 @@ export function AutomationBuilder() {
     setEdges([]);
     setSelectedNode(null);
     clearSimulationLog();
+    // reset local storage.
+    localStorage.setItem("automation-flow", JSON.stringify([]));
+    toast.success('New Flow created!')
+
   }, [setNodes, setEdges, setSelectedNode, clearSimulationLog]);
 
   const handleUndo = useCallback(() => {
@@ -245,20 +285,6 @@ export function AutomationBuilder() {
     }
   }, [redo, setNodes, setEdges, setSelectedNode]);
 
-  const runSimulation = useCallback(() => {
-    clearSimulationLog();
-    const triggerNodes = nodes.filter((node) => node.type === "trigger");
-
-    if (triggerNodes.length === 0) {
-      console.log("No trigger nodes found");
-      return;
-    }
-
-    triggerNodes.forEach((triggerNode) => {
-      simulateExecution(triggerNode, nodes, edges);
-    });
-  }, [nodes, edges, clearSimulationLog]);
-
   return (
     <div className="flex h-full">
       <input
@@ -277,12 +303,17 @@ export function AutomationBuilder() {
           onLoad={loadFlow}
           onSave={saveFlow}
           onReset={resetCanvas}
-          onSimulate={runSimulation}
           onUndo={handleUndo}
           onRedo={handleRedo}
           canUndo={canUndo}
           canRedo={canRedo}
-          onDelete={selectedNode ? deleteSelectedNode : undefined}
+          onDelete={
+            selectedNode
+              ? deleteSelectedNode
+              : selectedEdge
+              ? deleteSelectedEdge
+              : undefined
+          }
         />
 
         <div className="flex-1 flex">
@@ -297,20 +328,23 @@ export function AutomationBuilder() {
               onDrop={onDrop}
               onDragOver={onDragOver}
               onNodeClick={onNodeClick}
+              onEdgeClick={onEdgeClick}
               onPaneClick={onPaneClick}
               nodeTypes={nodeTypes}
               fitView
               className="bg-gray-50"
-              deleteKeyCode={["Delete"] as KeyCode[]}
+              deleteKeyCode="Delete"
+              connectionLineType={ConnectionLineType.SmoothStep}
             >
               <Controls />
               <MiniMap />
-              <Background variant="dots" gap={12} size={1} />
+              <Background gap={12} size={1} />
             </ReactFlow>
           </div>
 
           <ConfigPanel
             selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
             onUpdateNode={(nodeId, data) => {
               setNodes((nds) =>
                 nds.map((node) =>
@@ -321,6 +355,7 @@ export function AutomationBuilder() {
               );
             }}
             onDeleteNode={deleteSelectedNode}
+            onDeleteEdge={deleteSelectedEdge}
           />
         </div>
       </div>
@@ -330,64 +365,14 @@ export function AutomationBuilder() {
 
 function getDefaultLabel(type: string): string {
   switch (type) {
-    case "trigger":
-      return "New Trigger";
-    case "condition":
-      return "Check Condition";
-    case "action":
-      return "Perform Action";
-    case "ai":
-      return "AI Processing";
-    case "end":
-      return "End Flow";
     default:
-      return "Node";
+      return "Test Message";
   }
 }
 
 function getDefaultConfig(type: string): any {
   switch (type) {
-    case "trigger":
-      return { eventType: "new_ticket_created" };
-    case "condition":
-      return { field: "priority", operator: "equals", value: "high" };
-    case "action":
-      return { actionType: "send_email", config: {} };
-    case "ai":
-      return { model: "gpt-4", prompt: "Analyze the input" };
-    case "end":
-      return {};
     default:
       return {};
-  }
-}
-
-function simulateExecution(startNode: Node, nodes: Node[], edges: Edge[]) {
-  const { addSimulationLog } = useAutomationStore.getState();
-
-  const visited = new Set<string>();
-  const queue = [startNode];
-
-  while (queue.length > 0) {
-    const currentNode = queue.shift()!;
-
-    if (visited.has(currentNode.id)) continue;
-    visited.add(currentNode.id);
-
-    addSimulationLog({
-      nodeId: currentNode.id,
-      nodeType: currentNode.type || "unknown",
-      message: `Executing ${currentNode.data.label}`,
-      timestamp: new Date().toISOString(),
-    });
-
-    const outgoingEdges = edges.filter(
-      (edge) => edge.source === currentNode.id
-    );
-    const nextNodes = outgoingEdges
-      .map((edge) => nodes.find((node) => node.id === edge.target))
-      .filter(Boolean) as Node[];
-
-    queue.push(...nextNodes);
   }
 }
