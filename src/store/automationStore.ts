@@ -15,7 +15,7 @@ interface SimulationLog {
   timestamp: string;
 }
 
-interface FlowState {
+export interface FlowState {
   nodes: Node[];
   edges: Edge[];
 }

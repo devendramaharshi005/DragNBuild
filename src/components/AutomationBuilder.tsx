@@ -14,23 +14,22 @@ import ReactFlow, {
   MiniMap,
   type ReactFlowInstance,
   ConnectionLineType,
-  ReactFlowState,
 } from "reactflow";
 import { Sidebar } from "./Sidebar";
 import { Toolbar } from "./Toolbar";
 import { ConfigPanel } from "./ConfigPanel";
 import { nodeTypes } from "./nodes";
-import { useAutomationStore } from "../store/automationStore";
+import { FlowState, useAutomationStore } from "../store/automationStore";
 import toast from "react-hot-toast";
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 
-const getFlowStateFromLocalStorage = (): ReactFlowState | null => {
+const getFlowStateFromLocalStorage = (): FlowState | null => {
   const raw = localStorage.getItem("automation-flow");
   try {
     console.log(raw);
-    return raw ? (JSON.parse(raw) as ReactFlowState) : null;
+    return raw ? (JSON.parse(raw) as FlowState) : null;
   } catch {
     return null;
   }
@@ -250,7 +249,7 @@ export function AutomationBuilder() {
     // Show temporary save confirmation
     const originalTitle = document.title;
     document.title = "✓ Saved - Message Flow";
-    toast.success('Message Flow is Saved!')
+    toast.success("Message Flow is Saved!");
     setTimeout(() => {
       document.title = originalTitle;
     }, 2000);
@@ -263,8 +262,7 @@ export function AutomationBuilder() {
     clearSimulationLog();
     // reset local storage.
     localStorage.setItem("automation-flow", JSON.stringify([]));
-    toast.success('New Flow created!')
-
+    toast.success("New Flow created!");
   }, [setNodes, setEdges, setSelectedNode, clearSimulationLog]);
 
   const handleUndo = useCallback(() => {
